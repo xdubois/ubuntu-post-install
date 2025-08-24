@@ -195,6 +195,9 @@ if [ -f "bash_profile" ]; then
     echo "# Generated on $(date)" >> ~/.bashrc
     cat bash_profile >> ~/.bashrc
     log "Bash profile configuration added to ~/.bashrc"
+else
+    warn "bash_profile file not found. Skipping bash profile configuration."
+fi
 log "Bash profile updated. Source ~/.bashrc or restart terminal to apply changes."
 
 section "10. Additional Development Tools"
