@@ -229,12 +229,50 @@ Feel free to modify the files according to your needs:
 
 ### Bash Profile Features
 
-The `bash_profile` includes:
+The `.bash_profile` includes:
 - **Aliases**: Shortcuts for common commands (ll, la, cls, etc.)
 - **Environment setup**: PATH modifications, editor settings, colored output
+- **Custom functions**: Extract function for various archive formats
+
+## New Features in This Version
+
+### 🎯 Interactive Package Manager Choice
+- Choose between Snap and Flatpak packages during installation
+- Comprehensive alternatives available for most applications
+- Better sandboxing and newer versions with Flatpak option
+
+### 🏢 Enterprise Integration
+- **ProtonVPN**: Official client installation with repository setup
+- **Proton Mail Bridge**: Desktop email bridge for seamless integration
+- **kDrive**: Infomaniak cloud storage AppImage with dependency handling
+
+### 🖥️ Enhanced GNOME Experience  
+- **Window Centering**: New windows automatically center on screen
+- **Cleaner System**: Rhythmbox music player removed to reduce bloat
+- **System Utilities**: htop process monitor and network tools (ifconfig) included
+
+### 🔧 Improved Installation Process
+- Better error handling and user feedback
+- Organized sections for easier navigation
+- Proper AppImage support with FUSE dependencies
 
 ## Requirements
 
 - Ubuntu 24.04 LTS (Noble) or compatible Debian-based distribution
 - Internet connection for package downloads
 - Sudo privileges
+- GNOME desktop environment (for GNOME-specific configurations)
+
+## What Gets Installed
+
+This script will install approximately 50+ applications and tools including:
+- 📊 **System Tools**: htop, net-tools, extension-manager, gnome-tweaks
+- 🛡️ **Security**: ProtonVPN, KeePassXC
+- 💻 **Development**: Docker, Node.js, Rust, VS Code, Android Studio
+- 🎨 **Creative**: Pinta, FiraCode Nerd Font
+- 🌐 **Internet**: Firefox/Chromium, Discord, Thunderbird
+- ☁️ **Cloud**: kDrive, Proton Mail Bridge
+- 🎵 **Entertainment**: Spotify, Steam (with Rhythmbox removed)
+- 📁 **Productivity**: File managers, archive tools
+
+All with your choice of packaging format (Snap vs Flatpak) where available!

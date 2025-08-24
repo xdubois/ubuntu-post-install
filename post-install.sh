@@ -178,19 +178,28 @@ chmod +x ~/apps/kDrive.AppImage
 
 # Create desktop entry
 log "Creating desktop entry for kDrive..."
+mkdir -p ~/.local/share/applications
 cat > ~/.local/share/applications/kdrive.desktop << 'EOF'
 [Desktop Entry]
 Name=kDrive
 Comment=Infomaniak kDrive cloud storage
-Exec=~/apps/kDrive.AppImage
-Icon=~/apps/kdrive-icon.png
+Exec=/home/$USER/apps/kDrive.AppImage
+Icon=/home/$USER/apps/kdrive-icon.png
 Type=Application
-Categories=Office;Network;
+Categories=Office;Network;FileManager;
 StartupWMClass=kDrive
+MimeType=x-scheme-handler/kdrive;
 EOF
 
 # Download icon (fallback to a generic cloud icon if specific one not available)
-curl -L -o ~/apps/kdrive-icon.png "https://www.kdrive.infomaniak.com/favicon-96x96.png" || warn "Failed to download kDrive icon"
+curl -L -o ~/apps/kdrive-icon.png "https://www.kdrive.infomaniak.com/favicon-96x96.png" || {
+    warn "Failed to download kDrive icon, using generic cloud icon"
+    # Create a simple text-based icon as fallback
+    convert -size 96x96 xc:lightblue -pointsize 24 -fill darkblue -gravity center -annotate +0+0 "kDrive" ~/apps/kdrive-icon.png 2>/dev/null || warn "Could not create fallback icon"
+}
+
+# Update desktop database
+update-desktop-database ~/.local/share/applications/ 2>/dev/null || warn "Could not update desktop database"
 
 log "kDrive AppImage installed successfully in ~/apps/"
 
@@ -237,8 +246,9 @@ log "Setting up Proton applications..."
 
 # ProtonVPN via official repository
 log "Adding ProtonVPN repository..."
-wget -q -O - https://repo.protonvpn.com/debian/dists/stable/public_key.asc | sudo apt-key add -
-echo "deb https://repo.protonvpn.com/debian stable main" | sudo tee /etc/apt/sources.list.d/protonvpn.list
+# Use more reliable method for key installation
+curl -fsSL https://repo.protonvpn.com/debian/dists/stable/public_key.asc | gpg --dearmor | sudo tee /usr/share/keyrings/protonvpn-keyring.gpg > /dev/null
+echo "deb [signed-by=/usr/share/keyrings/protonvpn-keyring.gpg] https://repo.protonvpn.com/debian stable main" | sudo tee /etc/apt/sources.list.d/protonvpn.list
 
 # Update and install ProtonVPN
 sudo apt update
@@ -247,17 +257,19 @@ sudo apt install -y protonvpn || warn "Failed to install ProtonVPN from reposito
 # Proton Mail Bridge - try multiple installation methods
 log "Installing Proton Mail Bridge..."
 
-# Method 1: Try official .deb package
+# Method 1: Try official .deb package (check for latest version)
 BRIDGE_DEB_URL="https://proton.me/download/bridge/protonmail-bridge_3.0.21-1_amd64.deb"
-curl -L -o /tmp/protonmail-bridge.deb "$BRIDGE_DEB_URL"
-sudo dpkg -i /tmp/protonmail-bridge.deb || {
-    warn "Direct .deb installation failed, trying dependencies fix..."
-    sudo apt-get install -f -y
-    sudo dpkg -i /tmp/protonmail-bridge.deb || warn "Proton Mail Bridge installation failed"
-}
+curl -L -o /tmp/protonmail-bridge.deb "$BRIDGE_DEB_URL" || warn "Failed to download Proton Mail Bridge"
 
-# Clean up
-rm -f /tmp/protonmail-bridge.deb
+if [ -f /tmp/protonmail-bridge.deb ]; then
+    sudo dpkg -i /tmp/protonmail-bridge.deb || {
+        warn "Direct .deb installation failed, trying dependencies fix..."
+        sudo apt-get install -f -y
+        sudo dpkg -i /tmp/protonmail-bridge.deb || warn "Proton Mail Bridge installation failed"
+    }
+    # Clean up
+    rm -f /tmp/protonmail-bridge.deb
+fi
 
 log "Proton applications setup completed!"
 
