@@ -6,8 +6,9 @@ This repository contains scripts and configuration files to quickly set up a new
 
 ### 1. **Application Installation**
 - **Snap packages**: Android Studio, Chromium, VS Code, Discord, Firefox, Spotify, Steam, and more
-- **Flatpak applications**: Newelle, Resources
-- **APT packages**: Git, Docker, Python, development tools, multimedia applications
+- **Flatpak applications**: Newelle, Resources, and optional alternatives to Snap packages
+- **APT packages**: Development tools, system utilities (htop, net-tools), multimedia applications
+- **AppImage**: kDrive cloud storage client with proper dependency handling
 
 ### 2. **Development Environment**
 - Docker with Docker Compose
@@ -15,21 +16,27 @@ This repository contains scripts and configuration files to quickly set up a new
 - Rust and Cargo
 - Python 3 with pip
 - Git configuration
-- VS Code
+- VS Code (Snap or Flatpak)
 
-### 3. **Rust Packages**
+### 3. **Proton Services**
+- **ProtonVPN**: Secure VPN client with official repository installation
+- **Proton Mail Bridge**: Desktop email bridge for seamless email client integration
+
+### 4. **Rust Packages**
 - **dysk**: Disk usage utility with a modern interface
 - **eza**: Modern replacement for `ls` with colors and icons
 
-### 4. **Font Installation**
+### 5. **Font Installation**
 - **FiraCode Nerd Font**: Programming font with ligatures and icons
 
-### 5. **GNOME Configuration**
+### 6. **GNOME Configuration**
 - **Extensions**: Dash to Panel, ArcMenu, Bing Wallpaper, Vitals, Tiling Assistant, and more
 - **Keyboard shortcuts**: Custom keybindings (Super+E for file manager)
 - **Terminal profile**: Custom Solarized Dark theme with transparency
+- **Window centering**: Enabled by default for new windows
+- **Rhythmbox removal**: Removes default music player
 
-### 6. **Shell Configuration**
+### 7. **Shell Configuration**
 - Enhanced bash profile with useful aliases and functions
 - System utilities (extract function, mkcd, weather, etc.)
 - Custom functions and improved history settings
@@ -37,19 +44,18 @@ This repository contains scripts and configuration files to quickly set up a new
 
 ## Files
 
-- `post-install.sh` - Main installation script
-- `bash_profile` - Custom bash configuration (aliases, functions, environment)
+- `post-install.sh` - Main installation script with interactive Flatpak/Snap choice
+- `.bash_profile` - Custom bash configuration (aliases, functions, environment)
 - `gnome-keybindings.conf` - GNOME keyboard shortcuts configuration
 - `terminal-profiles.conf` - Terminal profile settings
-- `install-gnome-extensions.sh` - GNOME extensions installation guide
 - `README.md` - This file
 
 ## Usage
 
 1. **Clone or download this repository**
    ```bash
-   git clone <repository-url>
-   cd linux-post-install
+   git clone https://github.com/xdubois/ubuntu-post-install
+   cd ubuntu-post-install
    ```
 
 2. **Make the script executable**
@@ -62,7 +68,11 @@ This repository contains scripts and configuration files to quickly set up a new
    ./post-install.sh
    ```
 
-4. **Follow the post-installation steps** displayed at the end
+4. **Choose installation preferences** when prompted:
+   - Flatpak vs Snap packages
+   - Individual application confirmations
+
+5. **Follow the post-installation steps** displayed at the end
 
 ## Manual Steps Required
 
@@ -83,11 +93,46 @@ Some configurations require manual intervention:
    git config --global user.email "your.email@example.com"
    ```
 
-3. **Docker Group**: Log out and back in to apply Docker group membership
+3. **ProtonVPN Setup**: Configure your ProtonVPN account credentials
+4. **Proton Mail Bridge Setup**: Configure bridge with your Proton Mail account
+5. **kDrive Setup**: Sign in to your Infomaniak kDrive account in the AppImage
+6. **Docker Group**: Log out and back in to apply Docker group membership
+
+## Installation Options
+
+### Package Manager Choice
+The script offers you a choice between **Snap** and **Flatpak** packages:
+- **Snap packages**: Traditional Ubuntu packages with automatic updates
+- **Flatpak packages**: Universal packages with better sandboxing and newer versions
+
+### Available via Both Formats
+- VS Code / Visual Studio Code
+- Firefox
+- Thunderbird  
+- Discord
+- Chromium
+- Spotify
+- KeePassXC
+- Pinta
+- Remmina
+- Postman
+- Steam
+
+### Snap-only Applications
+- Android Studio (classic)
+- kubectl (classic)
+- DBeaver CE
+
+### Flatpak-only Applications  
+- Newelle (AI assistant)
+- Resources (system monitor)
+
+### AppImage Applications
+- kDrive (cloud storage) - Auto-installed in ~/apps/
 
 ## Current System Apps
 
-### Snap Packages
+### Snap Packages (Optional - user choice)
 - [Android Studio](https://snapcraft.io/android-studio) (classic) - Official Android development IDE
 - [Chromium](https://snapcraft.io/chromium) - Open-source web browser  
 - [VS Code](https://snapcraft.io/code) (classic) - Microsoft's code editor
@@ -107,6 +152,19 @@ Some configurations require manual intervention:
 - [Newelle](https://github.com/qwersyk/Newelle) (io.github.qwersyk.Newelle) - AI assistant application
 - [Resources](https://github.com/nokyan/resources) (net.nokyan.Resources) - System monitor
 
+#### Flatpak Alternatives (Optional - user choice)
+- com.visualstudio.code - Visual Studio Code
+- org.mozilla.firefox - Firefox browser
+- org.mozilla.Thunderbird - Thunderbird email client
+- com.discordapp.Discord - Discord chat
+- org.chromium.Chromium - Chromium browser
+- com.spotify.Client - Spotify music
+- org.keepassxc.KeePassXC - KeePassXC password manager
+- io.github.pinta_project.Pinta - Pinta image editor
+- org.remmina.Remmina - Remmina remote desktop
+- com.getpostman.Postman - Postman API tool
+- com.valvesoftware.Steam - Steam gaming platform
+
 ### APT Packages (Non-default)
 - flatpak - Universal app packaging format
 - extension-manager - GNOME Shell extensions manager
@@ -114,6 +172,19 @@ Some configurations require manual intervention:
 - papirus-icon-theme, arc-theme - Icon and window themes
 - Software packaging tools (software-properties-common, etc.)
 - unzip - Archive extraction utility
+- htop - Interactive process viewer
+- net-tools - Network configuration utilities (includes ifconfig)
+- fuse, libfuse2 - AppImage support dependencies
+
+### Proton Services
+- [ProtonVPN](https://protonvpn.com/) - Secure VPN service with official Linux client
+- [Proton Mail Bridge](https://proton.me/mail/bridge) - Desktop bridge for email clients
+
+### AppImage Applications
+- [kDrive](https://www.kdrive.infomaniak.com/) - Infomaniak cloud storage client (installed in ~/apps/)
+
+### Removed Applications
+- rhythmbox - Default Ubuntu music player (removed to reduce bloat)
 
 ### Rust Packages (Crates)
 - [dysk](https://crates.io/crates/dysk) - A disk usage utility with a modern interface
