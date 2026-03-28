@@ -55,6 +55,8 @@ APT_PACKAGES=(
     "papirus-icon-theme"
     "arc-theme"
     "unzip"
+    "htop"
+    "net-tools"
 )
 
 for package in "${APT_PACKAGES[@]}"; do
@@ -77,32 +79,7 @@ sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin d
 sudo usermod -aG docker $USER
 log "Added $USER to docker group. Please log out and back in for changes to take effect."
 
-section "4. Installing Snap Packages"
-log "Installing snap packages..."
-
-SNAP_PACKAGES=(
-    "android-studio --classic"
-    "chromium"
-    "code --classic"
-    "dbeaver-ce"
-    "discord"
-    "firefox"
-    "keepassxc"
-    "kubectl --classic"
-    "pinta"
-    "postman"
-    "remmina"
-    "spotify"
-    "steam"
-    "thunderbird"
-)
-
-for package in "${SNAP_PACKAGES[@]}"; do
-    log "Installing snap: $package"
-    sudo snap install $package || warn "Failed to install snap: $package"
-done
-
-section "5. Installing Flatpak and Applications"
+section "4. Installing Flatpak and Applications"
 log "Installing Flatpak support..."
 sudo apt install -y flatpak
 sudo apt install -y gnome-software-plugin-flatpak
@@ -114,12 +91,119 @@ FLATPAK_APPS=(
     "net.nokyan.Resources"
 )
 
+# Optional Flatpak alternatives to Snap packages (comment/uncomment as needed)
+FLATPAK_ALTERNATIVES=(
+    "com.visualstudio.code"                # Alternative to VS Code snap
+    "org.mozilla.firefox"                  # Alternative to Firefox snap
+    "org.mozilla.Thunderbird"              # Alternative to Thunderbird snap
+    "com.discordapp.Discord"               # Alternative to Discord snap
+    "org.chromium.Chromium"                # Alternative to Chromium snap
+    "com.spotify.Client"                   # Alternative to Spotify snap
+    "org.keepassxc.KeePassXC"              # Alternative to KeePassXC snap
+    "io.github.pinta_project.Pinta"       # Alternative to Pinta snap
+    "org.remmina.Remmina"                  # Alternative to Remmina snap
+    "com.getpostman.Postman"               # Alternative to Postman snap
+    "com.valvesoftware.Steam"              # Alternative to Steam snap
+)
+
+# Prompt user for installation preference
+read -p "Do you want to install Flatpak alternatives instead of Snap packages? (y/N): " use_flatpak_alternatives
+
 for app in "${FLATPAK_APPS[@]}"; do
     log "Installing flatpak: $app"
     flatpak install -y flathub "$app" || warn "Failed to install flatpak: $app"
 done
 
-section "6. Installing GNOME Extensions Support"
+if [[ $use_flatpak_alternatives =~ ^[Yy]$ ]]; then
+    log "Installing Flatpak alternatives to Snap packages..."
+    for app in "${FLATPAK_ALTERNATIVES[@]}"; do
+        log "Installing flatpak alternative: $app"
+        flatpak install -y flathub "$app" || warn "Failed to install flatpak: $app"
+    done
+    
+    # Skip snap installation if user chose Flatpak alternatives
+    log "Skipping Snap package installation (using Flatpak alternatives)"
+    SKIP_SNAPS=true
+else
+    log "Will install Snap packages in next section"
+    SKIP_SNAPS=false
+fi
+
+section "5. Installing Snap Packages"
+if [ "$SKIP_SNAPS" = "false" ]; then
+    log "Installing snap packages..."
+
+    SNAP_PACKAGES=(
+        "android-studio --classic"
+        "chromium"
+        "code --classic"
+        "dbeaver-ce"
+        "discord"
+        "firefox"
+        "keepassxc"
+        "kubectl --classic"
+        "pinta"
+        "postman"
+        "remmina"
+        "spotify"
+        "steam"
+        "thunderbird"
+    )
+
+    for package in "${SNAP_PACKAGES[@]}"; do
+        log "Installing snap: $package"
+        sudo snap install $package || warn "Failed to install snap: $package"
+    done
+else
+    log "Skipping Snap packages (Flatpak alternatives chosen)"
+fi
+
+section "6. Installing kDrive AppImage"
+log "Setting up kDrive AppImage..."
+
+# Create apps directory if it doesn't exist
+mkdir -p ~/apps
+
+# Install dependencies for old AppImage format
+log "Installing dependencies for AppImage support..."
+sudo apt install -y fuse libfuse2
+
+# Download kDrive AppImage (latest version)
+log "Downloading kDrive AppImage..."
+KDRIVE_URL="https://download.kdrive.infomaniak.com/desktop/latest/linux"
+curl -L -o ~/apps/kDrive.AppImage "$KDRIVE_URL"
+
+# Make it executable
+chmod +x ~/apps/kDrive.AppImage
+
+# Create desktop entry
+log "Creating desktop entry for kDrive..."
+mkdir -p ~/.local/share/applications
+cat > ~/.local/share/applications/kdrive.desktop << 'EOF'
+[Desktop Entry]
+Name=kDrive
+Comment=Infomaniak kDrive cloud storage
+Exec=/home/$USER/apps/kDrive.AppImage
+Icon=/home/$USER/apps/kdrive-icon.png
+Type=Application
+Categories=Office;Network;FileManager;
+StartupWMClass=kDrive
+MimeType=x-scheme-handler/kdrive;
+EOF
+
+# Download icon (fallback to a generic cloud icon if specific one not available)
+curl -L -o ~/apps/kdrive-icon.png "https://www.kdrive.infomaniak.com/favicon-96x96.png" || {
+    warn "Failed to download kDrive icon, using generic cloud icon"
+    # Create a simple text-based icon as fallback
+    convert -size 96x96 xc:lightblue -pointsize 24 -fill darkblue -gravity center -annotate +0+0 "kDrive" ~/apps/kdrive-icon.png 2>/dev/null || warn "Could not create fallback icon"
+}
+
+# Update desktop database
+update-desktop-database ~/.local/share/applications/ 2>/dev/null || warn "Could not update desktop database"
+
+log "kDrive AppImage installed successfully in ~/apps/"
+
+section "7. Installing GNOME Extensions Support"
 log "Installing GNOME Shell extensions support..."
 
 # Install extension manager
@@ -157,7 +241,39 @@ for ext in "${USER_EXTENSIONS[@]}"; do
     warn "   - $ext"
 done
 
-section "7. Restoring Keyboard Shortcuts"
+section "8. Installing ProtonVPN and Proton Mail Bridge"
+log "Setting up Proton applications..."
+
+# ProtonVPN via official repository
+log "Adding ProtonVPN repository..."
+# Use more reliable method for key installation
+curl -fsSL https://repo.protonvpn.com/debian/dists/stable/public_key.asc | gpg --dearmor | sudo tee /usr/share/keyrings/protonvpn-keyring.gpg > /dev/null
+echo "deb [signed-by=/usr/share/keyrings/protonvpn-keyring.gpg] https://repo.protonvpn.com/debian stable main" | sudo tee /etc/apt/sources.list.d/protonvpn.list
+
+# Update and install ProtonVPN
+sudo apt update
+sudo apt install -y protonvpn || warn "Failed to install ProtonVPN from repository"
+
+# Proton Mail Bridge - try multiple installation methods
+log "Installing Proton Mail Bridge..."
+
+# Method 1: Try official .deb package (check for latest version)
+BRIDGE_DEB_URL="https://proton.me/download/bridge/protonmail-bridge_3.0.21-1_amd64.deb"
+curl -L -o /tmp/protonmail-bridge.deb "$BRIDGE_DEB_URL" || warn "Failed to download Proton Mail Bridge"
+
+if [ -f /tmp/protonmail-bridge.deb ]; then
+    sudo dpkg -i /tmp/protonmail-bridge.deb || {
+        warn "Direct .deb installation failed, trying dependencies fix..."
+        sudo apt-get install -f -y
+        sudo dpkg -i /tmp/protonmail-bridge.deb || warn "Proton Mail Bridge installation failed"
+    }
+    # Clean up
+    rm -f /tmp/protonmail-bridge.deb
+fi
+
+log "Proton applications setup completed!"
+
+section "9. Restoring Keyboard Shortcuts"
 log "Restoring GNOME keyboard shortcuts..."
 if [ -f "gnome-keybindings.conf" ]; then
     dconf load /org/gnome/settings-daemon/plugins/media-keys/ < gnome-keybindings.conf
@@ -172,7 +288,7 @@ EOF
     warn "Edit gnome-keybindings.conf and re-run this section"
 fi
 
-section "8. Restoring Terminal Profile"
+section "10. Restoring Terminal Profile"
 log "Restoring terminal profile..."
 if [ -f "terminal-profiles.conf" ]; then
     dconf load /org/gnome/terminal/legacy/profiles:/ < terminal-profiles.conf
@@ -181,23 +297,26 @@ else
     warn "terminal-profiles.conf not found. Run: dconf dump /org/gnome/terminal/legacy/profiles:/ > terminal-profiles.conf"
 fi
 
-section "9. Setting up Bash Profile"
+section "11. Setting up Bash Profile"
 log "Setting up bash profile..."
 
 # Backup existing bashrc
 cp ~/.bashrc ~/.bashrc.backup.$(date +%Y%m%d_%H%M%S)
 
 # Check if bash_profile file exists
-if [ -f "bash_profile" ]; then
+if [ -f ".bash_profile" ]; then
     log "Adding custom bash profile configuration..."
     echo "" >> ~/.bashrc
     echo "# Custom configuration from post-install script" >> ~/.bashrc
     echo "# Generated on $(date)" >> ~/.bashrc
-    cat bash_profile >> ~/.bashrc
+    cat .bash_profile >> ~/.bashrc
     log "Bash profile configuration added to ~/.bashrc"
+else
+    warn ".bash_profile file not found. Skipping bash profile configuration."
+fi
 log "Bash profile updated. Source ~/.bashrc or restart terminal to apply changes."
 
-section "10. Additional Development Tools"
+section "12. Additional Development Tools"
 log "Installing additional development tools..."
 
 # Node.js via NodeSource
@@ -222,7 +341,7 @@ log "Installing Rust packages..."
 log "Rust packages (dysk, eza) installed successfully"
 
 
-section "11. Installing FiraCode Nerd Font"
+section "13. Installing FiraCode Nerd Font"
 log "Downloading and installing FiraCode Nerd Font..."
 
 # Create fonts directory if it doesn't exist
@@ -245,7 +364,7 @@ rm /tmp/FiraCode.zip
 
 log "FiraCode Nerd Font installed successfully!"
 
-section "12. Final Cleanup and System Configuration"
+section "14. Final Cleanup and System Configuration"
 log "Performing final system cleanup..."
 
 # Clean package cache
@@ -257,6 +376,20 @@ sudo ufw enable
 
 log "Installing icon themes and additional customizations..."
 sudo apt install -y papirus-icon-theme arc-theme
+
+section "15. GNOME Configuration"
+log "Configuring GNOME settings..."
+
+# Remove rhythmbox from default applications
+log "Removing rhythmbox from default applications..."
+sudo apt remove --purge -y rhythmbox || warn "Rhythmbox removal failed or not installed"
+sudo apt autoremove -y
+
+# Enable window centering by default
+log "Enabling window centering by default..."
+gsettings set org.gnome.mutter center-new-windows true || warn "Failed to enable window centering"
+
+log "GNOME configuration completed!"
 
 section "Installation Complete!"
 log "Post-installation script completed successfully!"
