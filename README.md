@@ -198,6 +198,6 @@ The `bash_profile` includes:
 
 ## Requirements
 
-- Ubuntu 24.04 LTS (Noble) or compatible Debian-based distribution
+- Ubuntu 26.04 LTS (Resolute) or compatible Debian-based distribution
 - Internet connection for package downloads
 - Sudo privileges
